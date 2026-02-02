@@ -25,27 +25,33 @@ class LoginViewModel(
 
     fun login() {
         viewModelScope.launch {
-            loginState = loginState.copy(isLoading = true, errorMessage = null)
-
             try {
-                val result = repository.acceso(
-                    loginState.matricula,
-                    loginState.contrasena
-                )
-
-                loginState = loginState.copy(
-                    isLoading = false,
-                    isSuccess = true,
-                    token = result
-                )
+                val token = repository.acceso(loginState.matricula, loginState.contrasena)
+                if (token.isNotEmpty()) {
+                    loginState = loginState.copy(
+                        isLoading = false,
+                        isSuccess = true,
+                        token = token
+                    )
+                } else {
+                    // Conexión fue exitosa, pero credenciales inválidas
+                    loginState = loginState.copy(
+                        isLoading = false,
+                        isSuccess = false,
+                        errorMessage = "Credenciales inválidas (pero servidor respondió)"
+                    )
+                }
             } catch (e: Exception) {
+                // Aquí sí falló la conexión
                 loginState = loginState.copy(
                     isLoading = false,
                     isSuccess = false,
-                    errorMessage = e.message
+                    errorMessage = "Error de conexión: ${e.message}"
                 )
             }
         }
+
+
     }
 }
 

@@ -20,6 +20,7 @@ import com.example.marsphotos.model.ProfileStudent
 import com.example.marsphotos.model.Usuario
 import com.dev.sicenet.network.SICENETWService
 import com.dev.sicenet.network.bodyacceso
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.BufferedReader
 import java.io.IOException
@@ -74,17 +75,35 @@ class NetworSNRepository(
 ) : SNRepository {
     /** Fetches list of MarsPhoto from marsApi*/
     override suspend fun acceso(m: String, p: String): String {
+        val soapBody = String.format(bodyacceso, m, escapeXml(p))
+            .toRequestBody("text/xml".toMediaType())
 
-        //callHTTPS()
-        val res = snApiService.acceso(bodyacceso.format(m,p).toRequestBody() )
 
-        Log.d("RXML", res.string() )
-       /* Log.d("RXML", res.body?.accesoLoginResponse?.accesoLoginResult.toString() )
+        val res = snApiService.acceso(soapBody)
 
-        return res.body?.accesoLoginResponse?.accesoLoginResult.toString()*/
-        /*Log.d("RXML", res.message() )
-        return res.message()*/
-        return ""
+        val responseString = res.string()
+        Log.d("RXML", responseString)
+
+        // Confirmar conexión exitosa
+        if (responseString.isNotEmpty()) {
+            Log.d("API", "Conexión exitosa con el servidor")
+        }
+
+        // Extraer resultado de autenticación
+        val regex = "<accesoLoginResult>(.*?)</accesoLoginResult>".toRegex()
+        val match = regex.find(responseString)
+        val token = match?.groups?.get(1)?.value ?: ""
+
+        return token
+    }
+
+    fun escapeXml(value: String): String {
+        return value
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;")
     }
 
     override suspend fun accesoObjeto(m: String, p: String): Usuario {

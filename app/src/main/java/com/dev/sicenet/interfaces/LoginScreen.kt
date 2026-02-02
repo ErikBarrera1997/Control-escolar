@@ -1,5 +1,7 @@
 package com.dev.sicenet.interfaces
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +21,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Modifier) {
     val state = viewModel.loginState
@@ -67,9 +70,15 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Mo
         }
 
         if (state.isSuccess) {
-            Text("Bienvenido, token: ${state.token}")
-            // Aquí podrías navegar a otra pantalla
+            Column {
+                Text("Bienvenido, token: ${state.token}")
+                Text("Matrícula: ${state.matricula}")
+                Text("Estado: Autenticación exitosa")
+                Text("Fecha de acceso: ${java.time.LocalDateTime.now()}")
+            }
+            // otr pantalla
         }
+
 
     }
 }
