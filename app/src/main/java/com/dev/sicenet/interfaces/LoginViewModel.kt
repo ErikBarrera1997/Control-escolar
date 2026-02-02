@@ -38,7 +38,7 @@ class LoginViewModel(
                     loginState = loginState.copy(
                         isLoading = false,
                         isSuccess = false,
-                        errorMessage = "Credenciales inválidas (pero servidor respondió)"
+                        errorMessage = "Credenciales inválidas"
                     )
                 }
             } catch (e: Exception) {

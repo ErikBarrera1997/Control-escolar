@@ -1,0 +1,63 @@
+# === Archivos de compilación y binarios ===
+bin/
+build/
+out/
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# === Archivos de dependencias ===
+*.log
+*.lock
+*.iml
+*.ipr
+*.iws
+*.swp
+*.swo
+
+# === Gradle / Maven ===
+.gradle/
+.gradle-cache/
+.gradle-build/
+.mvn/
+!gradle-wrapper.jar   # mantiene el wrapper necesario
+!mvnw                 # mantiene el wrapper necesario
+!mvnw.cmd
+
+# === IDEs ===
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# VS Code
+.vscode/
+
+# === Archivos del sistema ===
+.DS_Store
+Thumbs.db
+
+# === Archivos temporales ===
+*.tmp
+*.bak
+*.old
+
+# === Archivos de configuración locales ===
+.env
+*.local
+*.config
+*.properties
+*.yml
+*.yaml
+
+# === Archivos de cache ===
+*.cache
+.cache/
