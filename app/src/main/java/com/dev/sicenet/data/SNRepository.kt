@@ -21,7 +21,7 @@ import com.example.marsphotos.model.Usuario
 import com.dev.sicenet.network.SICENETWService
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-
+import org.json.JSONObject
 
 /**
  * Repository that fetch.
@@ -54,7 +54,6 @@ class NetworSNRepository(
             </soap:Envelope>
         """.trimIndent()
 
-        // Log del XML completo
         Log.d("SOAP_REQUEST", xml)
 
         val soapBody = xml.toRequestBody("text/xml; charset=utf-8".toMediaType())
@@ -63,10 +62,9 @@ class NetworSNRepository(
         var res = snApiService.acceso(soapBody)
         var responseString = res.string()
 
-        // Log de la respuesta completa
         Log.d("SOAP_RESPONSE", responseString)
 
-        // Si la respuesta es HTML (página de ayuda), reintentar una segunda vez
+        // Si la respuesta es HTML (página de ayuda), reintentar
         if (responseString.contains("<html")) {
             Log.w("SOAP_RETRY", "Respuesta HTML detectada, reintentando...")
             res = snApiService.acceso(soapBody)
@@ -74,10 +72,31 @@ class NetworSNRepository(
             Log.d("SOAP_RESPONSE_RETRY", responseString)
         }
 
-        // Extraer el token con regex
+        // Extraer contenido de <accesoLoginResult>
         val regex = "<accesoLoginResult>(.*?)</accesoLoginResult>".toRegex()
         val match = regex.find(responseString)
-        return match?.groups?.get(1)?.value ?: ""
+        val rawResult = match?.groups?.get(1)?.value ?: ""
+
+        if (rawResult.isBlank()) {
+            Log.w("SOAP_AUTH", "Respuesta vacía")
+            return ""
+        }
+
+        // Parsear JSON dentro de accesoLoginResult
+        return try {
+            val json = JSONObject(rawResult)
+            val acceso = json.optBoolean("acceso", false)
+            if (acceso) {
+                // Autenticación exitosa → devolver JSON completo o token
+                rawResult
+            } else {
+                Log.w("SOAP_AUTH", "Credenciales inválidas: $rawResult")
+                "" // devolver vacío para que el ViewModel muestre error
+            }
+        } catch (e: Exception) {
+            Log.e("SOAP_AUTH", "Error parseando JSON: ${e.message}")
+            ""
+        }
     }
 
     private fun escapeXml(value: String): String {
@@ -97,6 +116,7 @@ class NetworSNRepository(
         return ProfileStudent("Sin datos")
     }
 }
+
 
 
 

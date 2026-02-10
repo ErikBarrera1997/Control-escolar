@@ -7,6 +7,6 @@ data class LoginState(
     val isSuccess: Boolean = false,
     val isError: Boolean = false,
     val errorMessage: String? = null,
-    val token: String? = null
+    val token: String = ""
 )
 

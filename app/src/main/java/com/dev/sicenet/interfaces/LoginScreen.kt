@@ -69,17 +69,16 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Mo
             Text("Error: $it", color = Color.Red)
         }
 
-        if (state.isSuccess) {
+        // Mostrar éxito solo si el token no está vacío
+        if (state.isSuccess && state.token.isNotBlank()) {
             Column {
                 Text("Bienvenido, token: ${state.token}")
-//                Text("Matrícula: ${state.matricula}")
-//                Text("Estado: Autenticación exitosa")
-//                Text("Fecha de acceso: ${java.time.LocalDateTime.now()}")
             }
-            // otr pantalla
+        } else if (state.errorMessage != null) {
+            Text("Error: ${state.errorMessage}", color = Color.Red)
         }
-
 
     }
 }
+
 
