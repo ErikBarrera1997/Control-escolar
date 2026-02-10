@@ -72,9 +72,9 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Mo
         if (state.isSuccess) {
             Column {
                 Text("Bienvenido, token: ${state.token}")
-                Text("Matrícula: ${state.matricula}")
-                Text("Estado: Autenticación exitosa")
-                Text("Fecha de acceso: ${java.time.LocalDateTime.now()}")
+//                Text("Matrícula: ${state.matricula}")
+//                Text("Estado: Autenticación exitosa")
+//                Text("Fecha de acceso: ${java.time.LocalDateTime.now()}")
             }
             // otr pantalla
         }

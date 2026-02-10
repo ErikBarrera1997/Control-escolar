@@ -16,87 +16,71 @@
 package com.dev.sicenet.data
 
 import android.util.Log
-import com.example.marsphotos.model.ProfileStudent
+import com.dev.sicenet.model.ProfileStudent
 import com.example.marsphotos.model.Usuario
 import com.dev.sicenet.network.SICENETWService
-import com.dev.sicenet.network.bodyacceso
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStreamReader
-import java.io.OutputStream
-import java.net.HttpURLConnection
-import java.net.URL
-import javax.net.ssl.HttpsURLConnection
+
 
 /**
- * Repository that fetch mars photos list from marsApi.
+ * Repository that fetch.
  */
 interface SNRepository {
-    /** Fetches list of MarsPhoto from marsApi */
     suspend fun acceso(m: String, p: String): String
     suspend fun accesoObjeto(m: String, p: String): Usuario
     suspend fun profile(m: String, p: String): ProfileStudent
-
-
 }
 
-
-class DBLocalSNRepository(val apiDB : Any):SNRepository {
-    override suspend fun acceso(m: String, p: String): String {
-        //TODO("Not yet implemented")
-        //Reviso en base de datos
-        //Preparar Room
-
-        //apiDB.acceso( Usuario(matricula = m) )
-
-        return ""
-
-    }
-
-    override suspend fun accesoObjeto(m: String, p: String): Usuario {
-
-        //Tengo  que ir a Room
-        return Usuario(matricula = "")
-    }
-
-    override suspend fun profile(m: String, p: String): ProfileStudent {
-        //TODO("Not yet implemented")
-        return ProfileStudent("S")
-    }
-}
-
-/**
- * Network Implementation of Repository that fetch mars photos list from marsApi.
- */
 class NetworSNRepository(
     private val snApiService: SICENETWService
 ) : SNRepository {
-    /** Fetches list of MarsPhoto from marsApi*/
+
     override suspend fun acceso(m: String, p: String): String {
-        val soapBody = String.format(bodyacceso, m, escapeXml(p))
-            .toRequestBody("text/xml; charset=utf-8".toMediaType())
+        // Construir el XML con namespace correcto
+        val xml = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                           xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                           xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
 
-        val res = snApiService.acceso(soapBody)
+              <soap:Body>
+                <accesoLogin xmlns="http://tempuri.org/">
+                  <strMatricula>$m</strMatricula>
+                  <strContrasenia>${escapeXml(p)}</strContrasenia>
+                  <tipoUsuario>ALUMNO</tipoUsuario>
+                </accesoLogin>
+              </soap:Body>
+            </soap:Envelope>
+        """.trimIndent()
 
-        val responseString = res.string()
-        //Log.d("RXML", responseString)
+        // Log del XML completo
+        Log.d("SOAP_REQUEST", xml)
 
-        // Confirmar conexión exitosa
-        if (responseString.isNotEmpty()) {
-            Log.d("API", "Conexión exitosa con el servidor")
+        val soapBody = xml.toRequestBody("text/xml; charset=utf-8".toMediaType())
+
+        // Primera petición
+        var res = snApiService.acceso(soapBody)
+        var responseString = res.string()
+
+        // Log de la respuesta completa
+        Log.d("SOAP_RESPONSE", responseString)
+
+        // Si la respuesta es HTML (página de ayuda), reintentar una segunda vez
+        if (responseString.contains("<html")) {
+            Log.w("SOAP_RETRY", "Respuesta HTML detectada, reintentando...")
+            res = snApiService.acceso(soapBody)
+            responseString = res.string()
+            Log.d("SOAP_RESPONSE_RETRY", responseString)
         }
 
-        // Extraer resultado de autenticación
+        // Extraer el token con regex
         val regex = "<accesoLoginResult>(.*?)</accesoLoginResult>".toRegex()
         val match = regex.find(responseString)
-        val token = match?.groups?.get(1)?.value ?: ""
-
-        return token
+        return match?.groups?.get(1)?.value ?: ""
     }
 
-    fun escapeXml(value: String): String {
+    private fun escapeXml(value: String): String {
         return value
             .replace("&", "&amp;")
             .replace("<", "&lt;")
@@ -106,85 +90,14 @@ class NetworSNRepository(
     }
 
     override suspend fun accesoObjeto(m: String, p: String): Usuario {
-        //TODO("Not yet implemented")
-        return Usuario(matricula = "")
-
-
+        return Usuario(matricula = m)
     }
 
     override suspend fun profile(m: String, p: String): ProfileStudent {
-        TODO("Not yet implemented")
-
+        return ProfileStudent("Sin datos")
     }
-
-//    fun callHTTPS(){
-//        // Datos para la petición
-//        val matricula = "s20120999"
-//        val contrasenia = "MIPASS"
-//        val tipoUsuario = "ALUMNO" // o "DOCENTE", según corresponda
-//
-//        // URL del servicio web SOAP
-//        val urlString = "https://sicenet.surguanajuato.tecnm.mx/ws/wsalumnos.asmx"
-//
-//        // Cuerpo del mensaje SOAP
-//        val soapEnvelope = """
-//        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-//          <soap:Body>
-//            <accesoLogin xmlns="http://tempuri.org/">
-//              <strMatricula>$matricula</strMatricula>
-//              <strContrasenia>$contrasenia</strContrasenia>
-//              <tipoUsuario>$tipoUsuario</tipoUsuario>
-//            </accesoLogin>
-//          </soap:Body>
-//        </soap:Envelope>
-//    """.trimIndent()
-//
-//        try {
-//            // Establecer la conexión HTTPS
-//            val url = URL(urlString)
-//            val connection = url.openConnection() as HttpsURLConnection
-//
-//            // Configurar la conexión
-//            connection.requestMethod = "POST"
-//            connection.doOutput = true
-//            connection.setRequestProperty("Host", "sicenet.surguanajuato.tecnm.mx")
-//            connection.setRequestProperty("Content-Type", "text/xml; charset=\"UTF-8\"")
-//            //connection.setRequestProperty("Sec-Fetch-Mode", "cors")
-//            connection.setRequestProperty("Cookie", ".ASPXANONYMOUS=MaWJCZ-X2gEkAAAAODU2ZjkyM2EtNWE3ZC00NTdlLWFhYTAtYjk5ZTE5MDlkODIzeI1pCwvskL6aqtre4eT8Atfq2Po1;")
-//            connection.setRequestProperty("Content-Length", soapEnvelope.length.toString())
-//            connection.setRequestProperty("SOAPAction", "\"http://tempuri.org/accesoLogin\"")
-//
-//            // Enviar el cuerpo del mensaje SOAP
-//            val outputStream: OutputStream = connection.outputStream
-//            outputStream.write(soapEnvelope.toByteArray(Charsets.UTF_8))
-//            outputStream.close()
-//
-//            // Leer la respuesta del servicio
-//            val responseCode = connection.responseCode
-//            if (responseCode == HttpURLConnection.HTTP_OK) {
-//                val cookies = connection.getHeaderField("Set-Cookie")
-//                val reader = BufferedReader(InputStreamReader(connection.inputStream))
-//                var line: String?
-//                val response = StringBuilder()
-//
-//                while (reader.readLine().also { line = it } != null) {
-//                    response.append(line)
-//                }
-//
-//                // Aquí puedes procesar la respuesta del servicio
-//                println("Respuesta del servicio: $response")
-//                Log.d("SXML","Respuesta del servicio: $response")
-//            } else {
-//                // Manejar errores de conexión
-//                println("Error en la conexión: $responseCode")
-//            }
-//
-//            // Cerrar la conexión
-//            connection.disconnect()
-//        } catch (e: IOException) {
-//            // Manejar excepciones de conexión
-//            e.printStackTrace()
-//        }
-//    }
-
 }
+
+
+
+

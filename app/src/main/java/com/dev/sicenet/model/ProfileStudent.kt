@@ -1,6 +1,4 @@
-package com.example.marsphotos.model
-
-import kotlinx.serialization.Serializable
+package com.dev.sicenet.model
 
 
 data class ProfileStudent (val matricula : String) {
