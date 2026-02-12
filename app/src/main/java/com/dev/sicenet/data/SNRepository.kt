@@ -23,6 +23,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
+
 /**
  * Repository that fetch.
  */
@@ -37,7 +38,6 @@ class NetworSNRepository(
 ) : SNRepository {
 
     override suspend fun acceso(m: String, p: String): String {
-        // Construir el XML con namespace correcto
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -54,7 +54,7 @@ class NetworSNRepository(
             </soap:Envelope>
         """.trimIndent()
 
-        Log.d("SOAP_REQUEST", xml)
+        //Log.d("SOAP_REQUEST", xml)
 
         val soapBody = xml.toRequestBody("text/xml; charset=utf-8".toMediaType())
 
@@ -62,14 +62,14 @@ class NetworSNRepository(
         var res = snApiService.acceso(soapBody)
         var responseString = res.string()
 
-        Log.d("SOAP_RESPONSE", responseString)
+        //Log.d("SOAP_RESPONSE", responseString)
 
         // Si la respuesta es HTML (página de ayuda), reintentar
         if (responseString.contains("<html")) {
             Log.w("SOAP_RETRY", "Respuesta HTML detectada, reintentando...")
             res = snApiService.acceso(soapBody)
             responseString = res.string()
-            Log.d("SOAP_RESPONSE_RETRY", responseString)
+            //Log.d("SOAP_RESPONSE_RETRY", responseString)
         }
 
         // Extraer contenido de <accesoLoginResult>
@@ -108,13 +108,54 @@ class NetworSNRepository(
             .replace("'", "&apos;")
     }
 
+    override suspend fun profile(m: String, p: String): ProfileStudent {
+        val xml = """
+        <?xml version="1.0" encoding="utf-8"?>
+        <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                       xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+
+          <soap:Body>
+            <getAlumnoAcademico xmlns="http://tempuri.org/" />
+          </soap:Body>
+        </soap:Envelope>
+    """.trimIndent()
+
+        val soapBody = xml.toRequestBody("text/xml; charset=utf-8".toMediaType())
+        val res = snApiService.getAlumnoAcademico(soapBody)
+        val responseString = res.string()
+
+        //Log.d("SOAP_RESPONSE_PROFILE", responseString)
+
+        val regex = "<getAlumnoAcademicoResult>(.*?)</getAlumnoAcademicoResult>".toRegex()
+        val match = regex.find(responseString)
+        val rawResult = match?.groups?.get(1)?.value ?: ""
+        val json = JSONObject(rawResult)
+
+        return ProfileStudent(
+            fechaReins = json.getString("fechaReins"),
+            modEducativo = json.getInt("modEducativo"),
+            adeudo = json.getBoolean("adeudo"),
+            urlFoto = json.getString("urlFoto"),
+            adeudoDescripcion = json.getString("adeudoDescripcion"),
+            inscrito = json.getBoolean("inscrito"),
+            estatus = json.getString("estatus"),
+            semActual = json.getInt("semActual"),
+            cdtosAcumulados = json.getInt("cdtosAcumulados"),
+            cdtosActuales = json.getInt("cdtosActuales"),
+            especialidad = json.getString("especialidad"),
+            carrera = json.getString("carrera"),
+            lineamiento = json.getInt("lineamiento"),
+            nombre = json.getString("nombre"),
+            matricula = json.getString("matricula") )
+    }
+
+
+
     override suspend fun accesoObjeto(m: String, p: String): Usuario {
         return Usuario(matricula = m)
     }
 
-    override suspend fun profile(m: String, p: String): ProfileStudent {
-        return ProfileStudent("Sin datos")
-    }
 }
 
 

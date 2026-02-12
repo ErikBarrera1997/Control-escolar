@@ -7,14 +7,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.dev.sicenet.data.NetworSNRepository
 import com.dev.sicenet.factory.LoginViewModelFactory
-import com.dev.sicenet.interfaces.LoginScreen
-import com.dev.sicenet.interfaces.LoginViewModel
+import com.dev.sicenet.interfaces.AppNavHost
 import com.dev.sicenet.network.SICENETWService
 import com.dev.sicenet.ui.theme.SicenetTheme
 import okhttp3.JavaNetCookieJar
@@ -30,12 +28,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Interceptor para loguear request/response
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
-        // Configurar CookieJar para aceptar cookies ASP.NET
         val cookieManager = CookieManager().apply {
             setCookiePolicy(CookiePolicy.ACCEPT_ALL)
         }
@@ -45,6 +41,7 @@ class MainActivity : ComponentActivity() {
             .addInterceptor(logging)
             .build()
 
+        //aqui esta el retrofit
         val retrofit = Retrofit.Builder()
             .baseUrl("https://sicenet.surguanajuato.tecnm.mx/")
             .client(client)
@@ -52,22 +49,27 @@ class MainActivity : ComponentActivity() {
 
         val service = retrofit.create(SICENETWService::class.java)
         val repository = NetworSNRepository(service)
-        val factory = LoginViewModelFactory(repository)
+
+        val loginFactory = LoginViewModelFactory(repository)
 
         setContent {
             SicenetTheme {
-                val viewModel: LoginViewModel = viewModel(factory = factory)
+                val navController = rememberNavController()
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LoginScreen(
-                        viewModel = viewModel,
-                        modifier = Modifier.padding(innerPadding)
+                    AppNavHost(
+                        navController = navController,
+                        loginFactory = loginFactory,
+                        repository = repository,
+                        innerPadding = innerPadding
                     )
                 }
             }
         }
     }
 }
+
+
 
 
 

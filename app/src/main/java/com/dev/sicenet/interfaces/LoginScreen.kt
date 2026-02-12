@@ -21,13 +21,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Modifier) {
+fun LoginScreen(
+    viewModel: LoginViewModel = viewModel(),
+    modifier: Modifier = Modifier,
+    onLoginSuccess: (String, String) -> Unit
+) {
     val state = viewModel.loginState
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
@@ -69,16 +72,12 @@ fun LoginScreen(viewModel: LoginViewModel = viewModel(), modifier: Modifier = Mo
             Text("Error: $it", color = Color.Red)
         }
 
-        // Mostrar éxito solo si el token no está vacío
         if (state.isSuccess && state.token.isNotBlank()) {
-            Column {
-                Text("Bienvenido, token: ${state.token}")
-            }
-        } else if (state.errorMessage != null) {
-            Text("Error: ${state.errorMessage}", color = Color.Red)
+            //  dispara la navegación
+            onLoginSuccess(state.matricula, state.contrasena)
         }
-
     }
 }
+
 
 

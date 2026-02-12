@@ -66,5 +66,12 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("com.squareup.okhttp3:okhttp-urlconnection:4.12.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.ui:ui:1.6.0")
+    implementation ("androidx.compose.foundation:foundation:1.6.0")
+    implementation ("androidx.compose.material3:material3:1.2.0")
+    implementation("androidx.compose.ui:ui:1.6.0")
+    implementation ("org.jetbrains.kotlin:kotlin-stdlib")
+
 
 }
