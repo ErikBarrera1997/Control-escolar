@@ -21,6 +21,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import java.net.CookieManager
 import java.net.CookiePolicy
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
@@ -39,6 +40,9 @@ class MainActivity : ComponentActivity() {
         val client = OkHttpClient.Builder()
             .cookieJar(JavaNetCookieJar(cookieManager))
             .addInterceptor(logging)
+            .connectTimeout(30, TimeUnit.SECONDS) //Timeout de conexión
+            .readTimeout(30, TimeUnit.SECONDS) //Timeout de lectura
+            .writeTimeout(30, TimeUnit.SECONDS) // Timeout de escritura
             .build()
 
         //aqui esta el retrofit
@@ -50,7 +54,7 @@ class MainActivity : ComponentActivity() {
         val service = retrofit.create(SICENETWService::class.java)
         val repository = NetworSNRepository(service)
 
-        val loginFactory = LoginViewModelFactory(repository)
+        val loginFactory = LoginViewModelFactory(application, repository)
 
         setContent {
             SicenetTheme {
@@ -61,7 +65,8 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         loginFactory = loginFactory,
                         repository = repository,
-                        innerPadding = innerPadding
+                        innerPadding = innerPadding,
+                        service = service
                     )
                 }
             }

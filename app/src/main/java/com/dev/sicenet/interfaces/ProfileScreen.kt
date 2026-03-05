@@ -16,7 +16,9 @@ import androidx.navigation.NavHostController
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    matricula: String,
+    contrasena: String
 ) {
     val state = viewModel.profileState
 
@@ -70,6 +72,20 @@ fun ProfileScreen(
         ) {
             Text("Regresar")
         }
+
+        Button(
+            onClick = {
+                navController.navigate("academicData/$matricula/$contrasena")
+                {
+                    //Evita duplicar la ruta en el backstack
+                    launchSingleTop = true
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Ver datos académicos")
+        }
+
 
     }
 }
